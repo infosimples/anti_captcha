@@ -6,12 +6,12 @@ require "anti_captcha/version"
 Gem::Specification.new do |spec|
   spec.name          = "anti_captcha"
   spec.version       = AntiCaptcha::VERSION
-  spec.authors       = ["Rafael Ivan Garcia"]
-  spec.email         = ["rafael.ivan@infosimples.com.br"]
+  spec.authors       = ["Infosimples"]
+  spec.email         = ["team@infosimples.com.br"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = %q{Ruby API for Anti Captcha (CAPTCHA Solver as a Service)}
+  spec.description   = %q{TwoCaptcha is an automated CAPTCHA solving service}
+  spec.homepage      = "https://github.com/infosimples/anti_captcha"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
