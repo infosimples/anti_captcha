@@ -2,7 +2,7 @@ module AntiCaptcha
   class NoCaptchaSolution < AntiCaptcha::Solution
     attr_accessor :g_recaptcha_response, :g_recaptcha_response_md5
 
-    def initialize(task_result)
+    def initialize(task_result = nil)
       super
 
       if task_result
