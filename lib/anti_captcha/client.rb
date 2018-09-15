@@ -67,39 +67,27 @@ module AntiCaptcha
 
       options[:body64] = load_captcha(options)
       task = create_task!('ImageToTextTask', options)
+      api_result = get_task_result!(task['taskId'])
 
-      if task['taskId']
-        api_result = get_task_result!(task['taskId'])
+      task_result = AntiCaptcha::TaskResult.new(
+        task_id:           task['taskId'],
+        error_id:          api_result['errorId'],
+        error_code:        api_result['errorCode'],
+        error_description: api_result['errorDescription'],
+        status:            api_result['status'],
+        cost:              api_result['cost'],
+        ip:                api_result['ip'],
+        create_time:       api_result['createTime'],
+        end_time:          api_result['endTime'],
+        solve_count:       api_result['solveCount']
+      )
 
-        while api_result['status'] != 'ready'
-          sleep(polling)
-          api_result = get_task_result!(task['taskId'])
-          raise AntiCaptcha::Timeout if (Time.now - started_at) > timeout
-        end
-
-        task_result = AntiCaptcha::TaskResult.new(
-          task_id:           task['taskId'],
-          error_id:          api_result['errorId'],
-          error_code:        api_result['errorCode'],
-          error_description: api_result['errorDescription'],
-          status:            api_result['status'],
-          cost:              api_result['cost'],
-          ip:                api_result['ip'],
-          create_time:       api_result['createTime'],
-          end_time:          api_result['endTime'],
-          solve_count:       api_result['solveCount']
-        )
-
-        return AntiCaptcha::ImageToTextSolution.new(
-          api_response: api_result,
-          task_result:  task_result,
-          url:          api_result['solution']['url'],
-          text:         api_result['solution']['text']
-        )
-
-      else
-        raise AntiCaptcha.raise_error('taskId not received from Anti Captcha.')
-      end
+      return AntiCaptcha::ImageToTextSolution.new(
+        api_response: api_result,
+        task_result:  task_result,
+        url:          api_result['solution']['url'],
+        text:         api_result['solution']['text']
+      )
     end
 
     #
@@ -145,39 +133,27 @@ module AntiCaptcha
       end
 
       task = create_task!(task_type, hsh)
+      api_result = get_task_result!(task['taskId'])
 
-      if task['taskId']
-        api_result = get_task_result!(task['taskId'])
+      task_result = AntiCaptcha::TaskResult.new(
+        task_id:           task['taskId'],
+        error_id:          api_result['errorId'],
+        error_code:        api_result['errorCode'],
+        error_description: api_result['errorDescription'],
+        status:            api_result['status'],
+        cost:              api_result['cost'],
+        ip:                api_result['ip'],
+        create_time:       api_result['createTime'],
+        end_time:          api_result['endTime'],
+        solve_count:       api_result['solveCount']
+      )
 
-        while api_result['status'] != 'ready'
-          sleep(polling)
-          api_result = get_task_result!(task['taskId'])
-          raise AntiCaptcha::Timeout if (Time.now - started_at) > timeout
-        end
-
-        task_result = AntiCaptcha::TaskResult.new(
-          task_id:           task['taskId'],
-          error_id:          api_result['errorId'],
-          error_code:        api_result['errorCode'],
-          error_description: api_result['errorDescription'],
-          status:            api_result['status'],
-          cost:              api_result['cost'],
-          ip:                api_result['ip'],
-          create_time:       api_result['createTime'],
-          end_time:          api_result['endTime'],
-          solve_count:       api_result['solveCount']
-        )
-
-        return AntiCaptcha::NoCaptchaSolution.new(
-          api_response:             api_result,
-          task_result:              task_result,
-          g_recaptcha_response:     api_result['solution']['gRecaptchaResponse'],
-          g_recaptcha_response_md5: api_result['solution']['gRecaptchaResponseMD5']
-        )
-
-      else
-        raise AntiCaptcha.raise_error('taskId not received from Anti Captcha.')
-      end
+      return AntiCaptcha::NoCaptchaSolution.new(
+        api_response:             api_result,
+        task_result:              task_result,
+        g_recaptcha_response:     api_result['solution']['gRecaptchaResponse'],
+        g_recaptcha_response_md5: api_result['solution']['gRecaptchaResponseMD5']
+      )
     end
 
     #
@@ -270,8 +246,15 @@ module AntiCaptcha
     # @return [Hash] Information about the task.
     #
     def get_task_result!(task_id)
-      args = { taskId: task_id }
-      request('getTaskResult', args)
+      raise AntiCaptcha.raise_error('taskId not received from Anti Captcha.') unless task_id
+
+      loop do
+        api_result = request('getTaskResult', { taskId: task_id })
+        return api_result if api_result['status'] == 'ready'
+
+        sleep(polling)
+        raise AntiCaptcha::Timeout if (Time.now - started_at) > timeout
+      end
     end
 
     #
