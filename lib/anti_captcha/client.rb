@@ -124,15 +124,7 @@ module AntiCaptcha
     def decode_nocaptcha!(options, proxy = nil)
       started_at = Time.now
 
-      if proxy.nil?
-        task_type = 'NoCaptchaTaskProxyless'
-        hsh       = options
-      else
-        task_type = 'NoCaptchaTask'
-        hsh       = options.merge(proxy)
-      end
-
-      task = create_task!(task_type, hsh)
+      task = create_task!('NoCaptchaTask', options, proxy)
       api_result = get_task_result!(task['taskId'])
 
       task_result = AntiCaptcha::TaskResult.new(
@@ -180,17 +172,20 @@ module AntiCaptcha
     #   @option options [String]  :website_url Address of target web page.
     #   @option options [String]  :website_key Recaptcha website key.
     #   @option options [String]  :language_pool
-    #   @option options [String]  :proxy_type
-    #   @option options [String]  :proxy_address
-    #   @option options [String]  :proxy_port
-    #   @option options [String]  :proxy_login
-    #   @option options [String]  :proxy_login
-    #   @option options [String]  :proxy_password
-    #   @option options [String]  :user_agent
+    #
+    # @param [Hash] proxy Not mandatory. A hash with configs of the proxy that
+    #                     has to be used. Defaults to `nil`.
+    #   @option proxy [String]  :proxy_type
+    #   @option proxy [String]  :proxy_address
+    #   @option proxy [String]  :proxy_port
+    #   @option proxy [String]  :proxy_login
+    #   @option proxy [String]  :proxy_login
+    #   @option proxy [String]  :proxy_password
+    #   @option proxy [String]  :user_agent
     #
     # @return [Hash] Information about the task.
     #
-    def create_task!(type, options)
+    def create_task!(type, options, proxy = nil)
       args = {
         languagePool: (options[:language_pool] || 'en'),
         softId: '859'
@@ -209,30 +204,30 @@ module AntiCaptcha
           maxLength: options[:max_length]
         }
 
-      when 'NoCaptchaTaskProxyless'
-        args[:task] = {
-          type:       'NoCaptchaTaskProxyless',
-          websiteURL: options[:website_url],
-          websiteKey: options[:website_key]
-        }
-
       when 'NoCaptchaTask'
         args[:task] = {
           type:          'NoCaptchaTask',
           websiteURL:    options[:website_url],
           websiteKey:    options[:website_key],
-          proxyType:     options[:proxy_type],
-          proxyAddress:  options[:proxy_address],
-          proxyPort:     options[:proxy_port],
-          proxyLogin:    options[:proxy_login],
-          proxyPassword: options[:proxy_password],
-          userAgent:     options[:user_agent]
         }
 
       else
         message = "Invalid task type: '#{type}'. Allowed types: " +
-          "#{%w(ImageToTextTask NoCaptchaTaskProxyless NoCaptchaTask).join(', ')}"
+          "#{%w(ImageToTextTask NoCaptchaTask).join(', ')}"
         raise AntiCaptcha.raise_error(message)
+      end
+
+      if proxy.nil?
+        type += 'Proxyless'
+      else
+        args.merge!(
+          proxyType:     proxy[:proxy_type],
+          proxyAddress:  proxy[:proxy_address],
+          proxyPort:     proxy[:proxy_port],
+          proxyLogin:    proxy[:proxy_login],
+          proxyPassword: proxy[:proxy_password],
+          userAgent:     proxy[:user_agent]
+        )
       end
 
       request('createTask', args)
