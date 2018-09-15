@@ -3,7 +3,7 @@ module AntiCaptcha
   # This is the base AntiCaptcha exception class. Rescue it if you want to
   # catch any exception that might be raised.
   #
-  class Error < Exception
+  class Error < StandardError
   end
 
   class ArgumentError < Error
