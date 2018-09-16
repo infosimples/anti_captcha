@@ -4,6 +4,8 @@ module AntiCaptcha
   #
   class Client
     BASE_URL = 'https://api.anti-captcha.com/:action'
+    PROXYABLE_TASKS = %w(NoCaptchaTask FunCaptchaTask GeeTestTask)
+    SUPPORTED_TASKS = %w(ImageToTextTask NoCaptchaTask FunCaptchaTask)
 
     attr_accessor :client_key, :timeout, :polling
 
@@ -210,21 +212,23 @@ module AntiCaptcha
 
       else
         message = "Invalid task type: '#{type}'. Allowed types: " +
-          "#{%w(ImageToTextTask NoCaptchaTask FunCaptchaTask).join(', ')}"
+          "#{SUPPORTED_TASKS.join(', ')}"
         raise AntiCaptcha.raise_error(message)
       end
 
-      if proxy.nil?
-        args[:task][:type] += 'Proxyless'
-      else
-        args.merge!(
-          proxyType:     proxy[:proxy_type],
-          proxyAddress:  proxy[:proxy_address],
-          proxyPort:     proxy[:proxy_port],
-          proxyLogin:    proxy[:proxy_login],
-          proxyPassword: proxy[:proxy_password],
-          userAgent:     proxy[:user_agent]
-        )
+      if PROXYABLE_TASKS.include?(type)
+        if proxy.nil?
+          args[:task][:type] += 'Proxyless'
+        else
+          args.merge!(
+            proxyType:     proxy[:proxy_type],
+            proxyAddress:  proxy[:proxy_address],
+            proxyPort:     proxy[:proxy_port],
+            proxyLogin:    proxy[:proxy_login],
+            proxyPassword: proxy[:proxy_password],
+            userAgent:     proxy[:user_agent]
+          )
+        end
       end
 
       request('createTask', args)
