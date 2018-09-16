@@ -58,6 +58,9 @@ module AntiCaptcha
     #                                         answer. 0 - no requirements.
     #   @option options [Integer] :max_length Defines maximum length of the
     #                                         answer. 0 - no requirements.
+    #   @option options [String] :comment Additional comment for workers like
+    #                                     "enter letters in red color". Result
+    #                                     is not guaranteed.
     #
     # @return [AntiCaptcha::ImageToTextSolution] The solution of the image
     #                                            CAPTCHA.
@@ -151,6 +154,9 @@ module AntiCaptcha
     #                                         answer. 0 - no requirements.
     #   @option options [Integer] :max_length Defines maximum length of the
     #                                         answer. 0 - no requirements.
+    #   @option options [String] :comment Additional comment for workers like
+    #                                     "enter letters in red color". Result
+    #                                     is not guaranteed.
     #   # NoCaptcha
     #   @option options [String]  :website_url Address of target web page.
     #   @option options [String]  :website_key Recaptcha website key.
@@ -184,7 +190,8 @@ module AntiCaptcha
           numeric:   options[:numeric],
           math:      options[:math],
           minLength: options[:min_length],
-          maxLength: options[:max_length]
+          maxLength: options[:max_length],
+          comment:   options[:comment],
         }
 
       when 'NoCaptchaTask'
