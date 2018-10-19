@@ -4,6 +4,8 @@ module AntiCaptcha
   #
   class Client
     BASE_URL = 'https://api.anti-captcha.com/:action'
+    PROXYABLE_TASKS = %w(NoCaptchaTask FunCaptchaTask GeeTestTask)
+    SUPPORTED_TASKS = %w(ImageToTextTask NoCaptchaTask FunCaptchaTask)
 
     attr_accessor :client_key, :timeout, :polling
 
@@ -58,48 +60,18 @@ module AntiCaptcha
     #                                         answer. 0 - no requirements.
     #   @option options [Integer] :max_length Defines maximum length of the
     #                                         answer. 0 - no requirements.
+    #   @option options [String] :comment Additional comment for workers like
+    #                                     "enter letters in red color". Result
+    #                                     is not guaranteed.
     #
     # @return [AntiCaptcha::ImageToTextSolution] The solution of the image
     #                                            CAPTCHA.
     #
     def decode_image!(options)
-      started_at = Time.now
-
       options[:body64] = load_captcha(options)
       task = create_task!('ImageToTextTask', options)
-
-      if task['taskId']
-        api_result = get_task_result!(task['taskId'])
-
-        while api_result['status'] != 'ready'
-          sleep(polling)
-          api_result = get_task_result!(task['taskId'])
-          raise AntiCaptcha::Timeout if (Time.now - started_at) > timeout
-        end
-
-        task_result = AntiCaptcha::TaskResult.new(
-          task_id:           task['taskId'],
-          error_id:          api_result['errorId'],
-          error_code:        api_result['errorCode'],
-          error_description: api_result['errorDescription'],
-          status:            api_result['status'],
-          cost:              api_result['cost'],
-          ip:                api_result['ip'],
-          create_time:       api_result['createTime'],
-          end_time:          api_result['endTime'],
-          solve_count:       api_result['solveCount']
-        )
-
-        return AntiCaptcha::ImageToTextSolution.new(
-          api_response: api_result,
-          task_result:  task_result,
-          url:          api_result['solution']['url'],
-          text:         api_result['solution']['text']
-        )
-
-      else
-        raise AntiCaptcha.raise_error('taskId not received from Anti Captcha.')
-      end
+      task_result = get_task_result!(task['taskId'])
+      AntiCaptcha::ImageToTextSolution.new(task_result)
     end
 
     #
@@ -134,53 +106,37 @@ module AntiCaptcha
     # @return [AntiCaptcha::NoCaptchaSolution] The solution of the NoCaptcha.
     #
     def decode_nocaptcha!(options, proxy = nil)
-      started_at = Time.now
-
-      if proxy.nil?
-        task_type = 'NoCaptchaTaskProxyless'
-        hsh       = options
-      else
-        task_type = 'NoCaptchaTask'
-        hsh       = options.merge(proxy)
-      end
-
-      task = create_task!(task_type, hsh)
-
-      if task['taskId']
-        api_result = get_task_result!(task['taskId'])
-
-        while api_result['status'] != 'ready'
-          sleep(polling)
-          api_result = get_task_result!(task['taskId'])
-          raise AntiCaptcha::Timeout if (Time.now - started_at) > timeout
-        end
-
-        task_result = AntiCaptcha::TaskResult.new(
-          task_id:           task['taskId'],
-          error_id:          api_result['errorId'],
-          error_code:        api_result['errorCode'],
-          error_description: api_result['errorDescription'],
-          status:            api_result['status'],
-          cost:              api_result['cost'],
-          ip:                api_result['ip'],
-          create_time:       api_result['createTime'],
-          end_time:          api_result['endTime'],
-          solve_count:       api_result['solveCount']
-        )
-
-        return AntiCaptcha::NoCaptchaSolution.new(
-          api_response:             api_result,
-          task_result:              task_result,
-          g_recaptcha_response:     api_result['solution']['gRecaptchaResponse'],
-          g_recaptcha_response_md5: api_result['solution']['gRecaptchaResponseMD5']
-        )
-
-      else
-        raise AntiCaptcha.raise_error('taskId not received from Anti Captcha.')
-      end
+      task = create_task!('NoCaptchaTask', options, proxy)
+      task_result = get_task_result!(task['taskId'])
+      AntiCaptcha::NoCaptchaSolution.new(task_result)
     end
 
     #
+    # Decodes a FunCaptcha CAPTCHA.
+    #
+    # @param [Hash] options Options hash.
+    #   @option options [String]  :website_url
+    #   @option options [String]  :website_public_key
+    #   @option options [String]  :language_pool
+    #
+    # @param [Hash] proxy Not mandatory. A hash with configs of the proxy that
+    #                     has to be used. Defaults to `nil`.
+    #   @option proxy [String]  :proxy_type
+    #   @option proxy [String]  :proxy_address
+    #   @option proxy [String]  :proxy_port
+    #   @option proxy [String]  :proxy_login
+    #   @option proxy [String]  :proxy_login
+    #   @option proxy [String]  :proxy_password
+    #   @option proxy [String]  :user_agent
+    #
+    # @return [AntiCaptcha::FunCaptchaSolution] The solution of the FunCaptcha.
+    #
+    def decode_fun_captcha!(options, proxy = nil)
+      task = create_task!('FunCaptchaTask', options, proxy)
+      task_result = get_task_result!(task['taskId'])
+      AntiCaptcha::FunCaptchaSolution.new(task_result)
+    end
+
     # Creates a task for solving the selected CAPTCHA type.
     #
     # @param [String] type The type of the CAPTCHA.
@@ -200,21 +156,27 @@ module AntiCaptcha
     #                                         answer. 0 - no requirements.
     #   @option options [Integer] :max_length Defines maximum length of the
     #                                         answer. 0 - no requirements.
+    #   @option options [String] :comment Additional comment for workers like
+    #                                     "enter letters in red color". Result
+    #                                     is not guaranteed.
     #   # NoCaptcha
     #   @option options [String]  :website_url Address of target web page.
     #   @option options [String]  :website_key Recaptcha website key.
     #   @option options [String]  :language_pool
-    #   @option options [String]  :proxy_type
-    #   @option options [String]  :proxy_address
-    #   @option options [String]  :proxy_port
-    #   @option options [String]  :proxy_login
-    #   @option options [String]  :proxy_login
-    #   @option options [String]  :proxy_password
-    #   @option options [String]  :user_agent
+    #
+    # @param [Hash] proxy Not mandatory. A hash with configs of the proxy that
+    #                     has to be used. Defaults to `nil`.
+    #   @option proxy [String]  :proxy_type
+    #   @option proxy [String]  :proxy_address
+    #   @option proxy [String]  :proxy_port
+    #   @option proxy [String]  :proxy_login
+    #   @option proxy [String]  :proxy_login
+    #   @option proxy [String]  :proxy_password
+    #   @option proxy [String]  :user_agent
     #
     # @return [Hash] Information about the task.
     #
-    def create_task!(type, options)
+    def create_task!(type, options, proxy = nil)
       args = {
         languagePool: (options[:language_pool] || 'en'),
         softId: '859'
@@ -230,33 +192,43 @@ module AntiCaptcha
           numeric:   options[:numeric],
           math:      options[:math],
           minLength: options[:min_length],
-          maxLength: options[:max_length]
-        }
-
-      when 'NoCaptchaTaskProxyless'
-        args[:task] = {
-          type:       'NoCaptchaTaskProxyless',
-          websiteURL: options[:website_url],
-          websiteKey: options[:website_key]
+          maxLength: options[:max_length],
+          comment:   options[:comment],
         }
 
       when 'NoCaptchaTask'
         args[:task] = {
-          type:          'NoCaptchaTask',
-          websiteURL:    options[:website_url],
-          websiteKey:    options[:website_key],
-          proxyType:     options[:proxy_type],
-          proxyAddress:  options[:proxy_address],
-          proxyPort:     options[:proxy_port],
-          proxyLogin:    options[:proxy_login],
-          proxyPassword: options[:proxy_password],
-          userAgent:     options[:user_agent]
+          type:       'NoCaptchaTask',
+          websiteURL: options[:website_url],
+          websiteKey: options[:website_key],
+        }
+
+      when 'FunCaptchaTask'
+        args[:task] = {
+          type:            'FunCaptchaTask',
+          websiteURL:       options[:website_url],
+          websitePublicKey: options[:website_public_key],
         }
 
       else
         message = "Invalid task type: '#{type}'. Allowed types: " +
-          "#{%w(ImageToTextTask NoCaptchaTaskProxyless NoCaptchaTask).join(', ')}"
+          "#{SUPPORTED_TASKS.join(', ')}"
         raise AntiCaptcha.raise_error(message)
+      end
+
+      if PROXYABLE_TASKS.include?(type)
+        if proxy.nil?
+          args[:task][:type] += 'Proxyless'
+        else
+          args.merge!(
+            proxyType:     proxy[:proxy_type],
+            proxyAddress:  proxy[:proxy_address],
+            proxyPort:     proxy[:proxy_port],
+            proxyLogin:    proxy[:proxy_login],
+            proxyPassword: proxy[:proxy_password],
+            userAgent:     proxy[:user_agent]
+          )
+        end
       end
 
       request('createTask', args)
@@ -270,8 +242,20 @@ module AntiCaptcha
     # @return [Hash] Information about the task.
     #
     def get_task_result!(task_id)
-      args = { taskId: task_id }
-      request('getTaskResult', args)
+      raise AntiCaptcha.raise_error('taskId not received from Anti Captcha.') unless task_id
+
+      started_at = Time.now
+
+      loop do
+        api_result = request('getTaskResult', { taskId: task_id })
+
+        if api_result['status'] == 'ready'
+          return AntiCaptcha::TaskResult.new(api_result, task_id: task_id)
+        end
+
+        sleep(polling)
+        raise AntiCaptcha::Timeout if (Time.now - started_at) > timeout
+      end
     end
 
     #
