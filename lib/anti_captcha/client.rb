@@ -4,7 +4,7 @@ module AntiCaptcha
   #
   class Client
     BASE_URL = 'https://api.anti-captcha.com/:action'
-    PROXYABLE_TASKS = %w(NoCaptchaTask FunCaptchaTask GeeTestTask)
+    PROXYABLE_TASKS = %w(NoCaptchaTask FunCaptchaTask)
     SUPPORTED_TASKS = %w(ImageToTextTask NoCaptchaTask FunCaptchaTask)
 
     attr_accessor :client_key, :timeout, :polling
@@ -250,7 +250,7 @@ module AntiCaptcha
         api_result = request('getTaskResult', { taskId: task_id })
 
         if api_result['status'] == 'ready'
-          return AntiCaptcha::TaskResult.new(api_result, task_id: task_id)
+          return AntiCaptcha::TaskResult.new(api_result, task_id)
         end
 
         sleep(polling)
