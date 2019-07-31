@@ -150,6 +150,8 @@ Or install it yourself as:
   identify the website in which the CAPTCHA is found and the minimum score (0.3, 0.5 or 0.7) you
   desire.
 
+  **It's strongly recommended to use a minimum score of 0.3 as higher scores are extremely rare.**
+
   ```ruby
   options = {
     website_key: 'xyz',
