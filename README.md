@@ -135,6 +135,41 @@ Or install it yourself as:
   solution.token # Solution of the captcha
   ```
 
+8. **reCAPTCHA V3**
+
+  This method allows you to solve [reCAPTCHA v3](https://developers.google.com/recaptcha/docs/v3).
+
+  There are two methods available:
+
+  - `decode_recaptcha_v3`: solves reCAPTCHA v3. It doesn't raise exceptions.
+  - `decode_recaptcha_v3!`: solves reCAPTCHA v3. It may raise an `AntiCaptcha::Error` if something goes wrong.
+
+  **Send the `website_key`, `website_url`, `min_score` and `page_action` parameters**
+
+  This method requires no browser emulation. You can send four parameters that
+  identify the website in which the CAPTCHA is found and the minimum score (0.3, 0.5 or 0.7) you
+  desire.
+
+  ```ruby
+  options = {
+    website_key: 'xyz',
+    website_url: 'http://example.com/example=1',
+    min_score:   0.3,
+    page_action: 'myverify'
+  }
+
+  solution = client.decode_recaptcha_v3!(options)
+  solution.g_recaptcha_response # Solution of the captcha
+  ```
+
+  The solution (`solution.g_recaptcha_response`) will be a code that validates
+  the form, like the following:
+
+  ```ruby
+  "1JJHJ_VuuHAqJKxcaasbTsqw-L1Sm4gD57PTeaEr9-MaETG1vfu2H5zlcwkjsRoZoHxx6V9yUDw8Ig-hYD8kakmSnnjNQd50w_Y_tI3aDLp-s_7ZmhH6pcaoWWsid5hdtMXyvrP9DscDuCLBf7etLle8caPWSaYCpAq9DOTtj5NpSg6-OeCJdGdkjsakFUMeGeqmje87wSajcjmdjl_w4XZBY2zy8fUH6XoAGZ6AeCTulIljBQDObQynKDd-rutPvKNxZasDk-LbhTfw508g1lu9io6jnvm3kbAdnkfZ0x0PkGiUMHU7hnuoW6bXo2Yn_Zt5tDWL7N7wFtY6B0k7cTy73f8er508zReOuoyz2NqL8smDCmcJu05ajkPGt20qzpURMwHaw"
+  ```
+
+
 ## Notes
 
 #### Ruby dependencies

@@ -112,6 +112,36 @@ module AntiCaptcha
     end
 
     #
+    # Decodes a reCAPTCHA V3.
+    #
+    # @see `AntiCaptcha::Client#decode_recaptcha_v3!`
+    #
+    def decode_recaptcha_v3(options)
+      decode_recaptcha_v3!(options)
+    rescue
+      AntiCaptcha::RecaptchaV3Solution.new
+    end
+
+    #
+    # Decodes a reCAPTCHA V3. Proxy is not supported.
+    #
+    # @param [Hash] options Options hash.
+    #   @option options [String]  :website_url
+    #   @option options [String]  :website_key
+    #   @option options [String]  :min_score (one of 0.3, 0,5 or 0.7)
+    #   @option options [String]  :page_action
+    #   @option options [String]  :language_pool
+    #
+    # @return [AntiCaptcha::RecaptchaV3Solution] The solution of
+    #                                            the reCAPTCHA V3.
+    #
+    def decode_recaptcha_v3!(options)
+      task = create_task!('RecaptchaV3TaskProxyless', options)
+      task_result = get_task_result!(task['taskId'])
+      AntiCaptcha::RecaptchaV3Solution.new(task_result)
+    end
+
+    #
     # Decodes a FunCaptcha CAPTCHA.
     #
     # @param [Hash] options Options hash.
@@ -203,6 +233,15 @@ module AntiCaptcha
           websiteKey: options[:website_key],
         }
 
+      when 'RecaptchaV3TaskProxyless'
+        args[:task] = {
+          type: 'RecaptchaV3TaskProxyless',
+          websiteURL: options[:website_url],
+          websiteKey: options[:website_key],
+          minScore:   options[:min_score].to_f,
+          pageAction: options[:page_action],
+        }
+
       when 'FunCaptchaTask'
         args[:task] = {
           type:            'FunCaptchaTask',
@@ -226,7 +265,7 @@ module AntiCaptcha
             proxyPort:     proxy[:proxy_port],
             proxyLogin:    proxy[:proxy_login],
             proxyPassword: proxy[:proxy_password],
-            userAgent:     proxy[:user_agent]
+            userAgent:     proxy[:user_agent],
           )
         end
       end
@@ -272,10 +311,12 @@ module AntiCaptcha
     # tasks.
     #
     # @param [String] queue_id The ID of the queue. Options:
-    #                          1 - standart ImageToText, English language.
-    #                          2 - standart ImageToText, Russian language.
-    #                          5 - Recaptcha NoCaptcha tasks.
-    #                          6 - Recaptcha Proxyless task.
+    #                          1  - standart ImageToText, English language.
+    #                          2  - standart ImageToText, Russian language.
+    #                          5  - Recaptcha NoCaptcha tasks.
+    #                          6  - Recaptcha Proxyless task.
+    #                          7  - Funcaptcha task.
+    #                          10 - Funcaptcha Proxyless task.
     #
     # @return [Hash] Information about the queue.
     #

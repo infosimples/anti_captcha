@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["team@infosimples.com.br"]
 
   spec.summary       = %q{Ruby API for Anti Captcha (CAPTCHA Solver as a Service)}
-  spec.description   = %q{TwoCaptcha is an automated CAPTCHA solving service}
+  spec.description   = %q{Anti Captcha is an automated CAPTCHA solving service}
   spec.homepage      = "https://github.com/infosimples/anti_captcha"
   spec.license       = "MIT"
 
