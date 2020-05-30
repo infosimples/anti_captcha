@@ -259,7 +259,7 @@ module AntiCaptcha
         if proxy.nil?
           args[:task][:type] += 'Proxyless'
         else
-          args.merge!(
+          args[:task].merge!(
             proxyType:     proxy[:proxy_type],
             proxyAddress:  proxy[:proxy_address],
             proxyPort:     proxy[:proxy_port],
