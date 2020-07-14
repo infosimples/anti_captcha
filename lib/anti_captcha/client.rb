@@ -4,8 +4,8 @@ module AntiCaptcha
   #
   class Client
     BASE_URL = 'https://api.anti-captcha.com/:action'
-    PROXYABLE_TASKS = %w(NoCaptchaTask FunCaptchaTask)
-    SUPPORTED_TASKS = %w(ImageToTextTask NoCaptchaTask FunCaptchaTask)
+    PROXYABLE_TASKS = %w(NoCaptchaTask FunCaptchaTask HCaptchaTask)
+    SUPPORTED_TASKS = %w(ImageToTextTask NoCaptchaTask FunCaptchaTask HCaptchaTask)
 
     attr_accessor :client_key, :timeout, :polling
 
@@ -167,6 +167,42 @@ module AntiCaptcha
       AntiCaptcha::FunCaptchaSolution.new(task_result)
     end
 
+    #
+    # Decodes a HCaptcha CAPTCHA.
+    #
+    # @see `AntiCaptcha::Client#decode_h_captcha!`
+    #
+    def decode_h_captcha(options, proxy = nil)
+      decode_h_captcha!(options, proxy)
+    rescue
+      AntiCaptcha::HCaptchaSolution.new
+    end
+
+    #
+    # Decodes a HCaptcha CAPTCHA.
+    #
+    # @param [Hash] options Options hash.
+    #   @option options [String]  :website_url
+    #   @option options [String]  :website_key
+    #
+    # @param [Hash] proxy Not mandatory. A hash with configs of the proxy that
+    #                     has to be used. Defaults to `nil`.
+    #   @option proxy [String]  :proxy_type
+    #   @option proxy [String]  :proxy_address
+    #   @option proxy [String]  :proxy_port
+    #   @option proxy [String]  :proxy_login
+    #   @option proxy [String]  :proxy_login
+    #   @option proxy [String]  :proxy_password
+    #   @option proxy [String]  :user_agent
+    #
+    # @return [AntiCaptcha::HCaptchaSolution] The solution of the HCaptcha.
+    #
+    def decode_h_captcha!(options, proxy = nil)
+      task = create_task!('HCaptchaTask', options, proxy)
+      task_result = get_task_result!(task['taskId'])
+      AntiCaptcha::HCaptchaSolution.new(task_result)
+    end
+
     # Creates a task for solving the selected CAPTCHA type.
     #
     # @param [String] type The type of the CAPTCHA.
@@ -249,6 +285,13 @@ module AntiCaptcha
           websitePublicKey: options[:website_public_key],
         }
 
+      when 'HCaptchaTask'
+        args[:task] = {
+          type: 'HCaptchaTask',
+          websiteURL: options[:website_url],
+          websiteKey: options[:website_key],
+        }
+
       else
         message = "Invalid task type: '#{type}'. Allowed types: " +
           "#{SUPPORTED_TASKS.join(', ')}"
@@ -317,6 +360,11 @@ module AntiCaptcha
     #                          6  - Recaptcha Proxyless task.
     #                          7  - Funcaptcha task.
     #                          10 - Funcaptcha Proxyless task.
+    #                          18 - Recaptcha V3 s0.3
+    #                          19 - Recaptcha V3 s0.7
+    #                          20 - Recaptcha V3 s0.9
+    #                          21 - hCaptcha Proxy-On
+    #                          22 - hCaptcha Proxyless
     #
     # @return [Hash] Information about the queue.
     #
