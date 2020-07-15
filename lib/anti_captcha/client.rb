@@ -295,7 +295,7 @@ module AntiCaptcha
       else
         message = "Invalid task type: '#{type}'. Allowed types: " +
           "#{SUPPORTED_TASKS.join(', ')}"
-        raise AntiCaptcha.raise_error(message)
+        raise AntiCaptcha::ArgumentError.new(message)
       end
 
       if PROXYABLE_TASKS.include?(type)
@@ -324,7 +324,7 @@ module AntiCaptcha
     # @return [Hash] Information about the task.
     #
     def get_task_result!(task_id)
-      raise AntiCaptcha.raise_error('taskId not received from Anti Captcha.') unless task_id
+      raise AntiCaptcha::Error.new('taskId not received from Anti Captcha.') unless task_id
 
       started_at = Time.now
 
