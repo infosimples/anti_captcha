@@ -74,10 +74,17 @@ Or install it yourself as:
 5. **Get current stats of a queue.**
 
   Queue IDs:
-  - `1` Standart ImageToText, English language.
-  - `2` Standart ImageToText, Russian language.
-  - `5` Recaptcha NoCaptcha tasks.
-  - `6` Recaptcha Proxyless task.
+  - `1`  Standart ImageToText, English language.
+  - `2`  Standart ImageToText, Russian language.
+  - `5`  Recaptcha NoCaptcha tasks.
+  - `6`  Recaptcha Proxyless task.
+  - `7`  Funcaptcha task.
+  - `10` Funcaptcha Proxyless task.
+  - `18` Recaptcha V3 s0.3
+  - `19` Recaptcha V3 s0.7
+  - `20` Recaptcha V3 s0.9
+  - `21` hCaptcha Proxy-On
+  - `22` hCaptcha Proxyless
 
   ```ruby
   client.get_queue_stats!(queue_id)
@@ -171,6 +178,29 @@ Or install it yourself as:
   "1JJHJ_VuuHAqJKxcaasbTsqw-L1Sm4gD57PTeaEr9-MaETG1vfu2H5zlcwkjsRoZoHxx6V9yUDw8Ig-hYD8kakmSnnjNQd50w_Y_tI3aDLp-s_7ZmhH6pcaoWWsid5hdtMXyvrP9DscDuCLBf7etLle8caPWSaYCpAq9DOTtj5NpSg6-OeCJdGdkjsakFUMeGeqmje87wSajcjmdjl_w4XZBY2zy8fUH6XoAGZ6AeCTulIljBQDObQynKDd-rutPvKNxZasDk-LbhTfw508g1lu9io6jnvm3kbAdnkfZ0x0PkGiUMHU7hnuoW6bXo2Yn_Zt5tDWL7N7wFtY6B0k7cTy73f8er508zReOuoyz2NqL8smDCmcJu05ajkPGt20qzpURMwHaw"
   ```
 
+9. **hCaptcha**
+
+  This method allows you to solve hCaptcha.
+
+  There are two methods available:
+
+  - `decode_h_captcha`: solves hCaptcha CAPTCHAs. It doesn't raise exceptions.
+  - `decode_h_captcha!`: solves hCaptcha CAPTCHAs. It may raise an error if something goes wrong.
+
+  **Send the `website_key` and `website_url` parameters**
+
+  This method requires no browser emulation. You can send two parameters that
+  identify the website in which the CAPTCHA is found.
+
+  ```ruby
+  options = {
+    website_key: 'xyz',
+    website_url: 'http://example.com/example=1'
+  }
+
+  solution = client.decode_h_captcha!(options)
+  solution.g_recaptcha_response # Solution of the captcha
+  ```
 
 ## Notes
 
