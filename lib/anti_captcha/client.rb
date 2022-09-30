@@ -4,8 +4,7 @@ module AntiCaptcha
   #
   class Client
     BASE_URL = 'https://api.anti-captcha.com/:action'
-    PROXYABLE_TASKS = %w(NoCaptchaTask FunCaptchaTask HCaptchaTask)
-    SUPPORTED_TASKS = %w(ImageToTextTask NoCaptchaTask FunCaptchaTask HCaptchaTask)
+    PROXYABLE_TASKS = %w(RecaptchaV2Task FunCaptchaTask HCaptchaTask GeeTestTask)
 
     attr_accessor :client_key, :timeout, :polling
 
@@ -14,7 +13,7 @@ module AntiCaptcha
     #
     # @param [String] client_key The key of the Anti Captcha account.
     # @param [Hash]   options  Options hash.
-    # @option options [Integer] :timeout (60) Seconds before giving up of a
+    # @option options [Integer] :timeout (120) Seconds before giving up of a
     #                                         captcha being solved.
     # @option options [Integer] :polling  (5) Seconds before checking answer
     #                                         again.
@@ -23,7 +22,7 @@ module AntiCaptcha
     #
     def initialize(client_key, options = {})
       self.client_key = client_key
-      self.timeout    = options[:timeout] || 60
+      self.timeout    = options[:timeout] || 120
       self.polling    = options[:polling] || 5
     end
 
@@ -75,18 +74,19 @@ module AntiCaptcha
     end
 
     #
-    # Decodes a NoCaptcha CAPTCHA.
+    # Decodes a reCAPTCHA v2 (NoCaptcha).
     #
-    # @see `AntiCaptcha::Client#decode_nocaptcha!`
+    # @see `AntiCaptcha::Client#decode_recaptcha_v2!`
     #
-    def decode_nocaptcha(options, proxy = nil)
-      decode_nocaptcha!(options, proxy)
+    def decode_recaptcha_v2(options, proxy = nil)
+      decode_recaptcha_v2!(options, proxy)
     rescue
-      AntiCaptcha::NoCaptchaSolution.new
+      AntiCaptcha::RecaptchaV2Solution.new
     end
+    alias :decode_nocaptcha :decode_recaptcha_v2
 
     #
-    # Decodes a NoCaptcha CAPTCHA.
+    # Decodes a reCAPTCHA v2 (NoCaptcha).
     #
     # @param [Hash] options Options hash.
     #   @option options [String]  :website_url
@@ -103,16 +103,17 @@ module AntiCaptcha
     #   @option proxy [String]  :proxy_password
     #   @option proxy [String]  :user_agent
     #
-    # @return [AntiCaptcha::NoCaptchaSolution] The solution of the NoCaptcha.
+    # @return [AntiCaptcha::RecaptchaV2Solution] The solution of the reCAPTCHA v2.
     #
-    def decode_nocaptcha!(options, proxy = nil)
-      task = create_task!('NoCaptchaTask', options, proxy)
+    def decode_recaptcha_v2!(options, proxy = nil)
+      task = create_task!('RecaptchaV2Task', options, proxy)
       task_result = get_task_result!(task['taskId'])
-      AntiCaptcha::NoCaptchaSolution.new(task_result)
+      AntiCaptcha::RecaptchaV2Solution.new(task_result)
     end
+    alias :decode_nocaptcha! :decode_recaptcha_v2!
 
     #
-    # Decodes a reCAPTCHA V3.
+    # Decodes a reCAPTCHA v3.
     #
     # @see `AntiCaptcha::Client#decode_recaptcha_v3!`
     #
@@ -123,17 +124,18 @@ module AntiCaptcha
     end
 
     #
-    # Decodes a reCAPTCHA V3. Proxy is not supported.
+    # Decodes a reCAPTCHA v3. Proxy is not supported.
     #
     # @param [Hash] options Options hash.
     #   @option options [String]  :website_url
     #   @option options [String]  :website_key
     #   @option options [String]  :min_score (one of 0.3, 0,5 or 0.7)
     #   @option options [String]  :page_action
+    #   @option options [String]  :is_enterprise
     #   @option options [String]  :language_pool
     #
     # @return [AntiCaptcha::RecaptchaV3Solution] The solution of
-    #                                            the reCAPTCHA V3.
+    #                                            the reCAPTCHA v3.
     #
     def decode_recaptcha_v3!(options)
       task = create_task!('RecaptchaV3TaskProxyless', options)
@@ -203,6 +205,47 @@ module AntiCaptcha
       AntiCaptcha::HCaptchaSolution.new(task_result)
     end
 
+    #
+    # Decodes a Geetest CAPTCHA.
+    #
+    # @see `AntiCaptcha::Client#decode_geetest!`
+    #
+    def decode_geetest(options, proxy = nil)
+      decode_geetest!(options, proxy)
+    rescue
+      AntiCaptcha::GeetestSolution.new
+    end
+
+    #
+    # Decodes a Geetest CAPTCHA.
+    #
+    # @param [Hash] options Options hash.
+    #   @option options [String]  :website_url
+    #   @option options [String]  :gt
+    #   @option options [String]  :challenge
+    #   @option options [String]  :geetest_api_server_subdomain
+    #   @option options [String]  :geetest_get_lib
+    #   @option options [String]  :version
+    #   @option options [String]  :init_parameters
+    #
+    # @param [Hash] proxy Not mandatory. A hash with configs of the proxy that
+    #                     has to be used. Defaults to `nil`.
+    #   @option proxy [String]  :proxy_type
+    #   @option proxy [String]  :proxy_address
+    #   @option proxy [String]  :proxy_port
+    #   @option proxy [String]  :proxy_login
+    #   @option proxy [String]  :proxy_login
+    #   @option proxy [String]  :proxy_password
+    #   @option proxy [String]  :user_agent
+    #
+    # @return [AntiCaptcha::GeetestSolution] The solution of the Geetest.
+    #
+    def decode_geetest!(options, proxy = nil)
+      task = create_task!('GeeTestTask', options, proxy)
+      task_result = get_task_result!(task['taskId'])
+      AntiCaptcha::GeetestSolution.new(task_result)
+    end
+
     # Creates a task for solving the selected CAPTCHA type.
     #
     # @param [String] type The type of the CAPTCHA.
@@ -262,9 +305,9 @@ module AntiCaptcha
           comment:   options[:comment],
         }
 
-      when 'NoCaptchaTask'
+      when 'RecaptchaV2Task'
         args[:task] = {
-          type:       'NoCaptchaTask',
+          type:       'RecaptchaV2Task',
           websiteURL: options[:website_url],
           websiteKey: options[:website_key],
         }
@@ -272,11 +315,13 @@ module AntiCaptcha
       when 'RecaptchaV3TaskProxyless'
         args[:task] = {
           type: 'RecaptchaV3TaskProxyless',
-          websiteURL: options[:website_url],
-          websiteKey: options[:website_key],
-          minScore:   options[:min_score].to_f,
-          pageAction: options[:page_action],
+          websiteURL:   options[:website_url],
+          websiteKey:   options[:website_key],
+          minScore:     (options[:min_score] || 0.3).to_f,
+          pageAction:   options[:page_action],
         }
+        args[:isEnterprise] = options[:is_enterprise] if [true, false].include?(options[:is_enterprise])
+
 
       when 'FunCaptchaTask'
         args[:task] = {
@@ -287,14 +332,25 @@ module AntiCaptcha
 
       when 'HCaptchaTask'
         args[:task] = {
-          type: 'HCaptchaTask',
+          type:       'HCaptchaTask',
           websiteURL: options[:website_url],
           websiteKey: options[:website_key],
         }
 
+      when 'GeeTestTask'
+        args[:task] = {
+          type:       'GeeTestTask',
+          websiteURL: options[:website_url],
+          gt:          options[:gt],
+          challenge:   options[:challenge],
+        }
+        args[:geetestApiServerSubdomain] = options[:geetest_api_server_subdomain] if !options[:geetest_api_server_subdomain].nil?
+        args[:geetestGetLib]             = options[:geetest_get_lib]              if !options[:geetest_get_lib].nil?
+        args[:version]                   = options[:version]                      if !options[:version].nil?
+        args[:initParameters]            = options[:init_parameters]              if !options[:init_parameters].nil?
+
       else
-        message = "Invalid task type: '#{type}'. Allowed types: " +
-          "#{SUPPORTED_TASKS.join(', ')}"
+        message = "Invalid task type: '#{type}'."
         raise AntiCaptcha::ArgumentError.new(message)
       end
 
