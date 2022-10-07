@@ -94,8 +94,8 @@ solution.g_recaptcha_response
 solution = client.decode_recaptcha_v3!(
   website_key:   'xyz',
   website_url:   'http://example.com/example=1',
-  min_score:     0.3,
   page_action:   'myverify',
+  min_score:     0.3,   # OPTIONAL
   # is_enterprise: false, # OPTIONAL
 )
 
@@ -290,7 +290,7 @@ avoid conflicts with other gems.
 
 ### Input image format
 
-Any format you use in the `decode_image!` method (`file`, `path`, `body`, `body64`)
+Any format you use in the `decode_image!` method (`file`, `path`, `body` or `body64`)
 will always be converted to a `body64`, which is a base64-encoded binary string.
 So, if you already have this format on your end, there is no need for convertions
 before calling the API.
