@@ -2,9 +2,6 @@
 
 AntiCaptcha is a Ruby API for Anti-Captcha - [Anti-Captcha.com](http://getcaptchasolution.com/ipuz16klxh)
 
-> We suggest you to also check the recommended CAPTCHA provider DeathByCaptcha.
-> The gem for this provider is available at https://github.com/infosimples/deathbycaptcha.
-
 ## Installation
 
 Add this line to your application's Gemfile:
