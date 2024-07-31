@@ -4,7 +4,7 @@ module AntiCaptcha
   #
   class Client
     BASE_URL = 'https://api.anti-captcha.com/:action'
-    PROXYABLE_TASKS = %w(RecaptchaV2Task FunCaptchaTask HCaptchaTask GeeTestTask)
+    PROXYABLE_TASKS = %w(RecaptchaV2Task FunCaptchaTask HCaptchaTask GeeTestTask TurnstileTask)
 
     attr_accessor :client_key, :timeout, :polling
 
@@ -246,6 +246,40 @@ module AntiCaptcha
       AntiCaptcha::GeetestSolution.new(task_result)
     end
 
+    #
+    # Decodes a Turnstile CAPTCHA.
+    #
+    # @see `AntiCaptcha::Client#decode_turnstile!`
+    #
+    def decode_turnstile(options, proxy = nil)
+      decode_turnstile!(options, proxy)
+    rescue
+      AntiCaptcha::TurnstileSolution.new
+    end
+
+    #
+    # Decodes a Turnstile CAPTCHA.
+    #
+    # @param [Hash] options Options hash.
+    #   @option options [String]  :website_url
+    #   @option options [String]  :website_key
+    #
+    # @param [Hash] proxy Not mandatory. A hash with configs of the proxy that
+    #                     has to be used. Defaults to `nil`.
+    #   @option proxy [String]  :proxy_type
+    #   @option proxy [String]  :proxy_address
+    #   @option proxy [String]  :proxy_port
+    #   @option proxy [String]  :proxy_login
+    #   @option proxy [String]  :proxy_password
+    #
+    # @return [AntiCaptcha::TurnstileSolution] The solution of the Turnstile.
+    #
+    def decode_turnstile!(options, proxy = nil)
+      task = create_task!('TurnstileTask', options, proxy)
+      task_result = get_task_result!(task['taskId'])
+      AntiCaptcha::TurnstileSolution.new(task_result)
+    end
+
     # Creates a task for solving the selected CAPTCHA type.
     #
     # @param [String] type The type of the CAPTCHA.
@@ -349,6 +383,13 @@ module AntiCaptcha
         args[:version]                   = options[:version]                      if !options[:version].nil?
         args[:initParameters]            = options[:init_parameters]              if !options[:init_parameters].nil?
 
+      when 'TurnstileTask'
+        args[:task] = {
+          type:       'TurnstileTask',
+          websiteURL: options[:website_url],
+          websiteKey: options[:website_key],
+        }
+
       else
         message = "Invalid task type: '#{type}'."
         raise AntiCaptcha::ArgumentError.new(message)
@@ -421,6 +462,8 @@ module AntiCaptcha
     #                          20 - Recaptcha V3 s0.9
     #                          21 - hCaptcha Proxy-On
     #                          22 - hCaptcha Proxyless
+    #                          26 - Turnstile Proxy-On
+    #                          27 - Turnstile Proxyless
     #
     # @return [Hash] Information about the queue.
     #

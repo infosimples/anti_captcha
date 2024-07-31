@@ -239,6 +239,33 @@ solution.v4['captcha_output']
 - `proxy_password`: optional parameter. The proxy password.
 - `user_agent`: optional parameter. The user agent.
 
+#### Turnstile
+
+```ruby
+solution = client.decode_turnstile!(
+  website_key:    'xyz',
+  website_url:    'http://example.com/example=1',
+  # proxy_type:     'http',                   # OPTIONAL
+  # proxy_address:  '127.0.0.1',              # OPTIONAL
+  # proxy_port:     '8080',                   # OPTIONAL
+  # proxy_login:    'proxyLoginHere',         # OPTIONAL
+  # proxy_password: 'proxyPasswordHere',      # OPTIONAL
+)
+
+solution.token
+"0.vtJqmZnvobaUzK2i2PyKaSqHELYtBZfRoPwMvLMdA81WL_9G0vCO3y2VQVIeVplG0mxYF7uX......."
+```
+
+*Parameters:*
+
+- `website_key`: the site key for the Turnstile.
+- `website_url`: the URL of the page with the Turnstile challenge.
+- `proxy_type`: optional parameter. Proxy connection protocol.
+- `proxy_address`: optional parameter. The proxy address.
+- `proxy_port`: optional parameter. The proxy port.
+- `proxy_login`: optional parameter. The proxy login.
+- `proxy_password`: optional parameter. The proxy password.
+
 ### 3. Report an incorrectly solved image CAPTCHA for a refund
 
 It is only possible to report incorrectly solved image CAPTCHAs.
@@ -273,6 +300,8 @@ Queue IDs:
 - `23` Recaptcha Enterprise V2 with proxy
 - `24` Recaptcha Enterprise V2 without proxy
 - `25` AntiGateTask
+- `26` Turnstile with proxy
+- `27` Turnstile without proxy
 
 ```ruby
 client.get_queue_stats!(queue_id)
