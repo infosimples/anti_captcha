@@ -2,7 +2,6 @@ module AntiCaptcha
   class TurnstileSolution < AntiCaptcha::Solution
     attr_accessor :token
 
-
     def initialize(task_result = nil)
       super
 

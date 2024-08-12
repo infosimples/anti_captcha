@@ -239,7 +239,7 @@ solution.v4['captcha_output']
 - `proxy_password`: optional parameter. The proxy password.
 - `user_agent`: optional parameter. The user agent.
 
-#### Turnstile
+#### Cloudflare Turnstile
 
 ```ruby
 solution = client.decode_turnstile!(
