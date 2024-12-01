@@ -119,40 +119,6 @@ solution.g_recaptcha_response
 > About the `min_score` parameter: it's strongly recommended to use a minimum score of `0.3` as higher
 > scores are rare.
 
-#### hCaptcha
-
-```ruby
-solution = client.decode_h_captcha!(
-  website_key:    'xyz',
-  website_url:    'http://example.com/example=1',
-  # proxy_type:     'http',                   # OPTIONAL
-  # proxy_address:  '127.0.0.1',              # OPTIONAL
-  # proxy_port:     '8080',                   # OPTIONAL
-  # proxy_login:    'proxyLoginHere',         # OPTIONAL
-  # proxy_password: 'proxyPasswordHere',      # OPTIONAL
-  # user_agent:     'MODERN_USER_AGENT_HERE', # OPTIONAL
-)
-
-solution.token
-"P0_eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwYXNza2V5IjoiNnpWV..."
-
-# Or
-
-solution.g_recaptcha_response # Deprecated
-"P0_eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJwYXNza2V5IjoiNnpWV..."
-```
-
-*Parameters:*
-
-- `website_key`: the site key for the hCatpcha.
-- `website_url`: the URL of the page with the hCaptcha challenge.
-- `proxy_type`: optional parameter. Proxy connection protocol.
-- `proxy_address`: optional parameter. The proxy address.
-- `proxy_port`: optional parameter. The proxy port.
-- `proxy_login`: optional parameter. The proxy login.
-- `proxy_password`: optional parameter. The proxy password.
-- `user_agent`: optional parameter. The user agent.
-
 #### FunCaptcha
 
 ```ruby
@@ -174,7 +140,7 @@ solution.token
 *Parameters:*
 
 - `website_key`: the site key for the hCatpcha.
-- `website_url`: the URL of the page with the hCaptcha challenge.
+- `website_url`: the URL of the page with the challenge.
 - `proxy_type`: optional parameter. Proxy connection protocol.
 - `proxy_address`: optional parameter. The proxy address.
 - `proxy_port`: optional parameter. The proxy port.
@@ -295,8 +261,6 @@ Queue IDs:
 - `18` Recaptcha V3 s0.3
 - `19` Recaptcha V3 s0.7
 - `20` Recaptcha V3 s0.9
-- `21` hCaptcha with proxy
-- `22` hCaptcha without proxy
 - `23` Recaptcha Enterprise V2 with proxy
 - `24` Recaptcha Enterprise V2 without proxy
 - `25` AntiGateTask
