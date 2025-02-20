@@ -211,6 +211,8 @@ solution.v4['captcha_output']
 solution = client.decode_turnstile!(
   website_key:    'xyz',
   website_url:    'http://example.com/example=1',
+  # action:         'contact_form',           # OPTIONAL
+  # cdata:          'xyz',                    # OPTIONAL
   # proxy_type:     'http',                   # OPTIONAL
   # proxy_address:  '127.0.0.1',              # OPTIONAL
   # proxy_port:     '8080',                   # OPTIONAL
@@ -226,6 +228,8 @@ solution.token
 
 - `website_key`: the site key for the Turnstile.
 - `website_url`: the URL of the page with the Turnstile challenge.
+- `action`: optional parameter. Turnstile challenge unique action.
+- `cdata`: optional parameter. Turnstile challenge cData token.
 - `proxy_type`: optional parameter. Proxy connection protocol.
 - `proxy_address`: optional parameter. The proxy address.
 - `proxy_port`: optional parameter. The proxy port.
