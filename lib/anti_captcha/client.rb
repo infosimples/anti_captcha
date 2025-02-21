@@ -227,6 +227,8 @@ module AntiCaptcha
     # @param [Hash] options Options hash.
     #   @option options [String]  :website_url
     #   @option options [String]  :website_key
+    #   @option options [String]  :action
+    #   @option options [String]  :cdata
     #
     # @param [Hash] proxy Not mandatory. A hash with configs of the proxy that
     #                     has to be used. Defaults to `nil`.
@@ -342,9 +344,11 @@ module AntiCaptcha
 
       when 'TurnstileTask'
         args[:task] = {
-          type:       'TurnstileTask',
-          websiteURL: options[:website_url],
-          websiteKey: options[:website_key],
+          type:           'TurnstileTask',
+          websiteURL:     options[:website_url],
+          websiteKey:     options[:website_key],
+          action:         options[:action],
+          turnstileCData: options[:cdata],
         }
 
       else
